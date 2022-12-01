@@ -5,6 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\Controller;
+use App\Http\Requests\UserStoreRequest;
+use App\Rules\EmailValidation;
+use Illuminate\Support\Facades\Hash;
 
 class UsersController extends Controller
 {
@@ -26,23 +29,26 @@ class UsersController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(UserStoreRequest $request)
     {
-
-        try {
-            $user = new User;
-            $user->first_name = $request->first_name;
-            $user->last_name = $request->last_name;
-            $user->email_address = $request->email_address;
-            $user->phone_number = $request->phone_number;
-            $user->profile_picture = $this->uploadFile($request->profile_picture);
-            $user->residential_address = $request->residential_address;
-            $user->password = $request->password;
-            $user->save();
-            return response()->json($user);
-        } catch (\Throwable $th) {
-            throw $th;
+        if (!filter_var($request->email_address, FILTER_VALIDATE_EMAIL)) {
+            return response()->json("$request->email_address is not a valid email address");
         }
+            try {
+                $user = new User;
+                $user->first_name = $request->first_name;
+                $user->last_name = $request->last_name;
+                $user->email_address = $request->email_address;
+                $user->phone_number = $request->phone_number;
+                $user->profile_picture = $this->uploadFile($request->profile_picture);
+                $user->residential_address = $request->residential_address;
+                $user->password = Hash::make($request->password);
+                $user->save();
+                return response()->json($user);
+            } catch (\Throwable $th) {
+                throw $th;
+            }
+
     }
 
     /**
@@ -117,7 +123,9 @@ class UsersController extends Controller
 
     public function uploadFile($file)
     {
-
+        if(!request()->allFiles()){
+            return '';
+        }
         if ($file) {
 
             $date_time =  date('Y-m-d H:i:s');

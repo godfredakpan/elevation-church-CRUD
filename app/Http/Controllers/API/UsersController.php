@@ -35,7 +35,7 @@ class UsersController extends Controller
             $user->last_name = $request->last_name;
             $user->email_address = $request->email_address;
             $user->phone_number = $request->phone_number;
-            $user->profile_picture = $request->profile_picture;
+            $user->profile_picture = $this->uploadFile($request->profile_picture);
             $user->residential_address = $request->residential_address;
             $user->password = $request->password;
             $user->save();
@@ -76,13 +76,9 @@ class UsersController extends Controller
             $data = array();
 
             $data['first_name'] = $request->first_name;
-
             $data['last_name'] = $request->last_name;
-
             $data['email_address'] = $request->email_address;
-
             $data['phone_number'] = $request->phone_number;
-
             $data['residential_address'] = $request->residential_address;
 
             $user = User::where('id', $id)->update($data);
@@ -117,5 +113,32 @@ class UsersController extends Controller
         } catch (\Throwable $th) {
             return response()->json($th);
         }
+    }
+
+    public function uploadFile($file)
+    {
+
+        if ($file) {
+
+            $date_time =  date('Y-m-d H:i:s');
+
+            $dateTime_str =  str_replace(" ", "", str_replace(":", "", $date_time));
+
+            $fileName = preg_replace('/\s+/', '', $file->getClientOriginalName());
+
+            $url = '/profile_pictures' . '/' . $dateTime_str . $fileName;
+
+            $file_name = $url;
+
+            $name = $dateTime_str . $fileName;
+
+            $file->move("profile_pictures/" . "/", $file_name);
+
+            $document_link  = '/profile_pictures/' . $name;
+
+            return $document_link;
+        }
+
+        return null;
     }
 }
